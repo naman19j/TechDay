@@ -1,0 +1,82 @@
+/**
+ * api.js
+ * Thin wrappers around fetch() for every backend endpoint.
+ * All functions are async and throw on non-OK responses.
+ */
+
+'use strict';
+
+/* ── Generic helpers ────────────────────────────────────────── */
+async function _get(path) {
+  const r = await fetch(API_BASE + path);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function _post(path, body) {
+  const r = await fetch(API_BASE + path, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function _patch(path, body) {
+  const r = await fetch(API_BASE + path, {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function _delete(path) {
+  const r = await fetch(API_BASE + path, { method: 'DELETE' });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+/* ── Auth ───────────────────────────────────────────────────── */
+const Api = {
+
+  getMe: ()                    => _get('/api/me'),
+
+  /* ── Agenda ─────────────────────────────────────────────── */
+  getAgenda:  ()               => _get('/api/agenda'),
+  saveAgenda: (headers, rows, published) =>
+    _post('/api/agenda', { headers, rows, published }),
+
+  /* ── Presentations ──────────────────────────────────────── */
+  getPresentations: (role = 'user') =>
+    _get(`/api/presentations?role=${role}`),
+
+  submitPresentation: (formData) =>
+    fetch(API_BASE + '/api/presentations', { method: 'POST', body: formData })
+      .then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.error); }); return r.json(); }),
+
+  updatePresentationStatus: (id, status) =>
+    _patch(`/api/presentations/${id}/status`, { status }),
+
+  fileUrl: (filePath) => `${API_BASE}/uploads/${encodeURIComponent(filePath)}`,
+
+  /* ── Team ───────────────────────────────────────────────── */
+  getTeam: () => _get('/api/team'),
+
+  /* ── Results ────────────────────────────────────────────── */
+  getResults:  ()              => _get('/api/results'),
+  saveResults: (headers, rows, published) =>
+    _post('/api/results', { headers, rows, published }),
+
+  /* ── Upcoming Events ────────────────────────────────────── */
+  getUpcomingEvents:  ()       => _get('/api/upcoming-events'),
+  addUpcomingEvent:   (body)   => _post('/api/upcoming-events', body),
+  deleteUpcomingEvent:(id)     => _delete(`/api/upcoming-events/${id}`),
+
+  /* ── External Conferences ───────────────────────────────── */
+  getConferences:    ()        => _get('/api/conferences'),
+  addConference:     (body)    => _post('/api/conferences', body),
+  deleteConference:  (id)      => _delete(`/api/conferences/${id}`),
+};

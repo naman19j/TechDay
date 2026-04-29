@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tech Day 2025 — India Site</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════════════ -->
+<header>
+  <div class="brand">
+    <div class="brand-icon">⚡</div>
+    <div class="brand-text">
+      <div class="brand-title">Tech Day 2025</div>
+      <div class="brand-sub">INDIA SITE</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <!-- View-mode toggle (TC only — lets them preview as user) -->
+    <div class="view-toggle" id="view-toggle" style="display:none">
+      <label>View as:</label>
+      <button class="toggle-btn active"   id="btn-tc-view"  onclick="setViewMode('tech_council')">Tech Council</button>
+      <button class="toggle-btn inactive" id="btn-usr-view" onclick="setViewMode('user')">User</button>
+    </div>
+
+    <!-- User badge -->
+    <div class="user-pill">
+      <div class="user-avatar" id="user-avatar">N</div>
+      <div class="user-name-sm" id="user-name">Loading…</div>
+      <span class="user-role-badge tc" id="user-role-badge">TC</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════════
+     NAV TABS
+════════════════════════════════════════════════════════════════ -->
+<nav class="nav-bar">
+  <button class="nav-tab active" data-tab="home">        <span class="tab-icon">🏠</span> Home </button>
+  <button class="nav-tab"        data-tab="agenda">      <span class="tab-icon">📅</span> Agenda </button>
+  <button class="nav-tab"        data-tab="presentations"><span class="tab-icon">📊</span> Presentations &amp; Posters </button>
+  <button class="nav-tab"        data-tab="team">        <span class="tab-icon">👥</span> Organizing Team </button>
+  <button class="nav-tab"        data-tab="results">     <span class="tab-icon">🏆</span> Results </button>
+  <button class="nav-tab"        data-tab="upcoming">    <span class="tab-icon">🔭</span> Upcoming Tech Events </button>
+  <button class="nav-tab"        data-tab="conferences"> <span class="tab-icon">🌐</span> External Conferences </button>
+  <button class="nav-tab"        data-tab="ask">         <span class="tab-icon">✉️</span> Ask a Question </button>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════
+     MAIN — TAB SECTIONS
+════════════════════════════════════════════════════════════════ -->
+<main>
+
+  <!-- ── TAB 1: HOME ─────────────────────────────────────────── -->
+  <section id="content-home" class="tab-content active">
+    <div class="home-hero">
+      <div class="site-head-card">
+        <div class="site-head-photo-wrap">
+          <!-- Drop site-head.jpg into static/assets/images/ to show the photo -->
+          <img id="site-head-img"
+               src="static/assets/images/site-head.jpg"
+               alt="Site Head"
+               onerror="this.style.display='none'">
+          <span id="site-head-placeholder">👤</span>
+        </div>
+        <blockquote class="quote">
+          "Innovation is not about technology alone — it's about people who dare to think
+          differently and build something extraordinary together. Tech Day is our celebration
+          of that spirit."
+        </blockquote>
+        <div class="quote-author">— Rajesh Kumar, India Site Head</div>
+      </div>
+    </div>
+
+    <div class="page-head">
+      <h1>About Tech Day 2025</h1>
+      <p>A day to celebrate innovation, learning, and the incredible talent at our India site.</p>
+    </div>
+
+    <div class="card">
+      <p class="overview-body">
+        Tech Day 2025 is our flagship annual technology showcase, bringing together the
+        brightest minds across engineering, product, design, and data at our India site.
+        This year's event features live presentations, interactive poster sessions,
+        lightning talks, panel discussions, and recognition of outstanding technical contributions.
+        <br><br>
+        Whether you're presenting groundbreaking research, showcasing a side project, or
+        simply here to learn — Tech Day is your platform. We encourage every team member to
+        participate, ask questions, and be inspired by the innovation happening right here.
+        <br><br>
+        Join us for a day of exploration, collaboration, and celebration of technology that matters.
+      </p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon">🎤</div><div class="stat-num">20+</div><div class="stat-lbl">Presentations</div></div>
+      <div class="stat-card"><div class="stat-icon">📌</div><div class="stat-num">15+</div><div class="stat-lbl">Poster Sessions</div></div>
+      <div class="stat-card"><div class="stat-icon">👩‍💻</div><div class="stat-num">200+</div><div class="stat-lbl">Attendees Expected</div></div>
+      <div class="stat-card"><div class="stat-icon">🏅</div><div class="stat-num">5</div><div class="stat-lbl">Award Categories</div></div>
+    </div>
+  </section>
+
+  <!-- ── TAB 2: AGENDA ───────────────────────────────────────── -->
+  <section id="content-agenda" class="tab-content">
+    <div class="page-head">
+      <h1>Event Agenda</h1>
+      <p>Full schedule for Tech Day 2025.</p>
+    </div>
+
+    <!-- TC toolbar (hidden for regular users) -->
+    <div id="agenda-tc-toolbar" class="tc-toolbar" style="display:none">
+      <button class="btn btn-secondary btn-sm" onclick="agendaAddRow()">＋ Row</button>
+      <button class="btn btn-secondary btn-sm" onclick="agendaAddCol()">＋ Column</button>
+      <span class="toolbar-spacer"></span>
+      <button class="btn btn-secondary btn-sm" onclick="saveAgenda(false)">💾 Save Draft</button>
+      <button class="btn btn-amber    btn-sm" onclick="saveAgenda(true)">🚀 Publish Agenda</button>
+    </div>
+
+    <div id="agenda-container">
+      <div class="loading"><div class="spinner"></div> Loading agenda…</div>
+    </div>
+  </section>
+
+  <!-- ── TAB 3: PRESENTATIONS & POSTERS ─────────────────────── -->
+  <section id="content-presentations" class="tab-content">
+    <div class="page-head">
+      <h1>Presentations &amp; Posters</h1>
+      <p>Submit your work or browse accepted entries.</p>
+    </div>
+
+    <!-- Submission form (everyone) -->
+    <div class="card" style="margin-bottom:28px">
+      <div class="section-label">📤 Submit Your Work</div>
+      <form id="pres-form" onsubmit="submitPresentation(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Title *</label>
+            <input type="text" id="pres-title" class="form-input" placeholder="e.g. ML at Scale: Our Journey" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Presenter Name *</label>
+            <input type="text" id="pres-presenter" class="form-input" placeholder="Full name" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">File (PDF, PPT, PPTX, or Image) *</label>
+          <div class="file-drop" id="file-drop">
+            <input type="file" id="pres-file" accept=".pdf,.ppt,.pptx,.png,.jpg,.jpeg,.gif" required onchange="onFileChange(this)">
+            <div class="fd-icon">📁</div>
+            <div class="fd-text">Drop your file here or <strong>click to browse</strong></div>
+            <div class="fd-name" id="fd-name"></div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="pres-submit-btn">Submit for Review</button>
+      </form>
+    </div>
+
+    <!-- Accepted entries -->
+    <div class="section-label">✅ Accepted Presentations &amp; Posters</div>
+    <div id="pres-accepted-container">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+
+    <!-- TC approval panel -->
+    <div id="pres-approval-section" style="display:none; margin-top:32px">
+      <div class="section-label" style="color:var(--amber)">
+        ⚡ Pending Approval <span class="badge badge-tc">Tech Council</span>
+      </div>
+      <div id="pres-pending-container">
+        <div class="loading"><div class="spinner"></div> Loading…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TAB 4: ORGANIZING TEAM ─────────────────────────────── -->
+  <section id="content-team" class="tab-content">
+    <div class="page-head">
+      <h1>Organizing Team</h1>
+      <p>Meet the Tech Council powering Tech Day 2025.</p>
+    </div>
+    <div class="team-grid" id="team-grid">
+      <div class="loading"><div class="spinner"></div> Loading team…</div>
+    </div>
+  </section>
+
+  <!-- ── TAB 5: RESULTS ─────────────────────────────────────── -->
+  <section id="content-results" class="tab-content">
+    <div class="page-head">
+      <h1>Event Results</h1>
+      <p>Winners and results from Tech Day 2025.</p>
+    </div>
+
+    <div id="results-tc-toolbar" class="tc-toolbar" style="display:none">
+      <button class="btn btn-secondary btn-sm" onclick="resultsAddRow()">＋ Row</button>
+      <button class="btn btn-secondary btn-sm" onclick="resultsAddCol()">＋ Column</button>
+      <span class="toolbar-spacer"></span>
+      <button class="btn btn-secondary btn-sm" onclick="saveResults(false)">💾 Save Draft</button>
+      <button class="btn btn-amber    btn-sm" onclick="saveResults(true)">🚀 Publish Results</button>
+    </div>
+
+    <div id="results-container">
+      <div class="loading"><div class="spinner"></div> Loading results…</div>
+    </div>
+  </section>
+
+  <!-- ── TAB 6: UPCOMING TECH EVENTS ───────────────────────── -->
+  <section id="content-upcoming" class="tab-content">
+    <div class="page-head">
+      <h1>Upcoming Tech Events</h1>
+      <p>Internal tech events planned for coming months.</p>
+    </div>
+
+    <div id="upcoming-tc-form" style="display:none">
+      <div class="tc-form-card">
+        <h3>⚡ Add Tech Event <span class="badge badge-tc">Tech Council</span></h3>
+        <form onsubmit="addUpcomingEvent(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Topic *</label>
+              <input type="text" id="ue-topic" class="form-input" placeholder="Event topic / title" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tentative Date</label>
+              <input type="text" id="ue-date" class="form-input" placeholder="e.g. July 2025">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Quarter</label>
+              <select id="ue-quarter" class="form-input">
+                <option value="">— Select —</option>
+                <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Presenter</label>
+              <input type="text" id="ue-presenter" class="form-input" placeholder="Presenter name">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Add Event</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="upcoming-container">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+  </section>
+
+  <!-- ── TAB 7: EXTERNAL CONFERENCES ───────────────────────── -->
+  <section id="content-conferences" class="tab-content">
+    <div class="page-head">
+      <h1>External Conferences</h1>
+      <p>Upcoming industry conferences worth knowing about.</p>
+    </div>
+
+    <div id="conf-tc-form" style="display:none">
+      <div class="tc-form-card">
+        <h3>⚡ Add Conference <span class="badge badge-tc">Tech Council</span></h3>
+        <form onsubmit="addConference(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Conference Name *</label>
+              <input type="text" id="cf-name" class="form-input" placeholder="e.g. KubeCon 2025" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Submission URL (optional)</label>
+              <input type="url" id="cf-url" class="form-input" placeholder="https://…">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Conference Month/Date</label>
+              <input type="text" id="cf-date" class="form-input" placeholder="e.g. Nov 12–15, 2025">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Date for Submission</label>
+              <input type="text" id="cf-last" class="form-input" placeholder="e.g. June 30, 2025">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Add Conference</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="conf-container">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+  </section>
+
+  <!-- ── TAB 8: ASK A QUESTION ──────────────────────────────── -->
+  <section id="content-ask" class="tab-content">
+    <div class="ask-hero">
+      <div class="ask-icon-wrap">✉️</div>
+      <h2>Ask the Tech Council</h2>
+      <p>Have a question about Tech Day, a presentation, or anything tech? Send us a message!</p>
+      <div class="ask-email-box">techcouncil@abc.com</div>
+      <a href="mailto:techcouncil@abc.com?subject=Tech%20Day%20Question" class="btn btn-primary">
+        ✉️ Compose Email
+      </a>
+      <p class="ask-note">Clicking the button opens your default email client.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Toast notification container -->
+<div id="toast-container"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     JAVASCRIPT  (load in dependency order)
+════════════════════════════════════════════════════════════════ -->
+<script src="static/js/config.js"></script>
+<script src="static/js/utils.js"></script>
+<script src="static/js/api.js"></script>
+<script src="static/js/dynamicTable.js"></script>
+<script src="static/js/agenda.js"></script>
+<script src="static/js/presentations.js"></script>
+<script src="static/js/team.js"></script>
+<script src="static/js/results.js"></script>
+<script src="static/js/upcoming.js"></script>
+<script src="static/js/conferences.js"></script>
+<script src="static/js/app.js"></script>
+</body>
+</html>
