@@ -16,10 +16,10 @@
 ════════════════════════════════════════════════════════════════ -->
 <header>
   <div class="brand">
-    <div class="brand-icon">⚡</div>
-    <div class="brand-text">
+    
+    
       <div class="brand-title">Tech Day 2025</div>
-      <div class="brand-sub">INDIA SITE</div>
+      
     </div>
   </div>
 
@@ -110,18 +110,19 @@
 
   <!-- ── TAB 2: AGENDA ───────────────────────────────────────── -->
   <section id="content-agenda" class="tab-content">
-    <div class="page-head">
+    <!-- Title row: heading left, action buttons right (matches Figma) -->
+    <div class="tab-title-row">
       <h1>Event Agenda</h1>
-      <p>Full schedule for Tech Day 2025.</p>
-    </div>
-
-    <!-- TC toolbar (hidden for regular users) -->
-    <div id="agenda-tc-toolbar" class="tc-toolbar" style="display:none">
-      <button class="btn btn-secondary btn-sm" onclick="agendaAddRow()">＋ Row</button>
-      <button class="btn btn-secondary btn-sm" onclick="agendaAddCol()">＋ Column</button>
-      <span class="toolbar-spacer"></span>
-      <button class="btn btn-secondary btn-sm" onclick="saveAgenda(false)">💾 Save Draft</button>
-      <button class="btn btn-amber    btn-sm" onclick="saveAgenda(true)">🚀 Publish Agenda</button>
+      <!-- View mode: single "Edit Agenda" button -->
+      <div id="agenda-view-actions" style="display:none">
+        <button class="btn btn-primary" onclick="agendaStartEdit()">Edit Agenda</button>
+      </div>
+      <!-- Edit mode: Add Row + Publish + Cancel -->
+      <div id="agenda-edit-actions" class="bar-actions" style="display:none">
+        <button class="btn btn-success" onclick="agendaAddRow()">Add Row</button>
+        <button class="btn btn-amber"   onclick="saveAgenda(true)">Publish</button>
+        <button class="btn btn-cancel"  onclick="agendaCancelEdit()">Cancel</button>
+      </div>
     </div>
 
     <div id="agenda-container">
@@ -193,17 +194,16 @@
 
   <!-- ── TAB 5: RESULTS ─────────────────────────────────────── -->
   <section id="content-results" class="tab-content">
-    <div class="page-head">
+    <div class="tab-title-row">
       <h1>Event Results</h1>
-      <p>Winners and results from Tech Day 2025.</p>
-    </div>
-
-    <div id="results-tc-toolbar" class="tc-toolbar" style="display:none">
-      <button class="btn btn-secondary btn-sm" onclick="resultsAddRow()">＋ Row</button>
-      <button class="btn btn-secondary btn-sm" onclick="resultsAddCol()">＋ Column</button>
-      <span class="toolbar-spacer"></span>
-      <button class="btn btn-secondary btn-sm" onclick="saveResults(false)">💾 Save Draft</button>
-      <button class="btn btn-amber    btn-sm" onclick="saveResults(true)">🚀 Publish Results</button>
+      <div id="results-view-actions" style="display:none">
+        <button class="btn btn-primary" onclick="resultsStartEdit()">Edit Results</button>
+      </div>
+      <div id="results-edit-actions" class="bar-actions" style="display:none">
+        <button class="btn btn-success" onclick="resultsAddRow()">Add Row</button>
+        <button class="btn btn-amber"   onclick="saveResults(true)">Publish</button>
+        <button class="btn btn-cancel"  onclick="resultsCancelEdit()">Cancel</button>
+      </div>
     </div>
 
     <div id="results-container">

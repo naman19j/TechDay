@@ -1,23 +1,21 @@
 /**
- * results.js
- * Handles all logic for Tab 5 — Results.
+ * results.js — Tab 5: Results
  *
- * TC users  : build a dynamic table, save drafts, and publish.
- * All users : see published results, or "Results coming soon".
+ * Same UX pattern as agenda.js:
+ *  - View mode : read-only table + "Edit Results" button (TC only)
+ *  - Edit mode : inline inputs + "Add Row" / "Publish" / "Cancel"
  */
 
 'use strict';
 
-/* ── Module state ───────────────────────────────────────────── */
 let resHeaders   = [];
 let resRows      = [];
 let resPublished = false;
+let resEditing   = false;
+let resSnapshot  = { headers: [], rows: [] };
 
 /* ── Entry point ────────────────────────────────────────────── */
 async function loadResults() {
-  document.getElementById('results-tc-toolbar').style.display =
-    App.isTC() ? 'flex' : 'none';
-
   const con = document.getElementById('results-container');
   con.innerHTML = loadingHTML('Loading results…');
 
@@ -30,28 +28,31 @@ async function loadResults() {
     resHeaders = []; resRows = []; resPublished = false;
   }
 
+  resEditing = false;
   _renderResults();
 }
 
-/* ── Render the results container ───────────────────────────── */
+/* ── Render ─────────────────────────────────────────────────── */
 function _renderResults() {
-  const con     = document.getElementById('results-container');
-  const hasData = resHeaders.length > 0 && resRows.length > 0;
+  const con      = document.getElementById('results-container');
+  const viewBtns = document.getElementById('results-view-actions');
+  const editBtns = document.getElementById('results-edit-actions');
+  const hasData  = resHeaders.length > 0 && resRows.length > 0;
 
-  if (!hasData) {
+  if (viewBtns) viewBtns.style.display = (!resEditing && App.isTC()) ? 'flex' : 'none';
+  if (editBtns) editBtns.style.display = (resEditing  && App.isTC()) ? 'flex' : 'none';
+
+  if (!hasData || (!resPublished && !App.isTC())) {
+    con.innerHTML = '';
+    const div = document.createElement('div');
     if (App.isTC()) {
-      con.innerHTML = emptyState('🏆', 'No results yet',
-        'Add columns and rows above, then publish when ready.');
+      div.innerHTML = emptyState('🏆', 'No results yet',
+        'Click "Edit Results" to enter the event results.');
     } else {
-      con.innerHTML = emptyState('⏳', 'Results coming soon',
+      div.innerHTML = emptyState('⏳', 'Results coming soon',
         'Event results will be posted here after the event.');
     }
-    return;
-  }
-
-  if (!resPublished && !App.isTC()) {
-    con.innerHTML = emptyState('⏳', 'Results coming soon',
-      'Event results will be posted here after the event.');
+    con.appendChild(div);
     return;
   }
 
@@ -59,7 +60,7 @@ function _renderResults() {
   const tbl = DynamicTable.build({
     headers:     resHeaders,
     rows:        resRows,
-    editable:    App.isTC(),
+    editable:    resEditing && App.isTC(),
     onAddRow:    resultsAddRow,
     onAddCol:    resultsAddCol,
     onDeleteRow: (ri) => { resRows.splice(ri, 1);        _renderResults(); },
@@ -71,39 +72,54 @@ function _renderResults() {
   });
   con.appendChild(tbl);
 
-  // Status strip (TC only)
-  if (App.isTC()) {
+  if (App.isTC() && !resPublished && !resEditing) {
     const strip = document.createElement('div');
     strip.className = 'status-strip';
-    strip.innerHTML = resPublished
-      ? '<span class="badge badge-accepted">✅ Published — visible to all users</span>'
-      : '<span class="badge badge-pending">DRAFT — not visible to users yet</span>';
+    strip.innerHTML = '<span class="badge badge-pending">DRAFT — not published yet</span>';
     con.appendChild(strip);
   }
 }
 
-/* ── Toolbar: add row / column ──────────────────────────────── */
+/* ── Edit / Cancel ──────────────────────────────────────────── */
+function resultsStartEdit() {
+  resSnapshot = {
+    headers: JSON.parse(JSON.stringify(resHeaders)),
+    rows:    JSON.parse(JSON.stringify(resRows)),
+  };
+  if (resHeaders.length === 0) {
+    resHeaders = ['Category', 'Winner', 'Project', 'Score'];
+    resRows    = [];
+  }
+  resEditing = true;
+  _renderResults();
+}
+
+function resultsCancelEdit() {
+  resHeaders = resSnapshot.headers;
+  resRows    = resSnapshot.rows;
+  resEditing = false;
+  _renderResults();
+}
+
+/* ── Add row / column ───────────────────────────────────────── */
 function resultsAddRow() {
   resRows.push(resHeaders.map(() => ''));
   _renderResults();
 }
-
 function resultsAddCol() {
   resHeaders.push('New Column');
   resRows.forEach(r => r.push(''));
   _renderResults();
 }
 
-/* ── Save draft or publish ──────────────────────────────────── */
+/* ── Publish ────────────────────────────────────────────────── */
 async function saveResults(publish) {
   try {
     await Api.saveResults(resHeaders, resRows, publish);
     resPublished = publish;
+    resEditing   = false;
     _renderResults();
-    toast(
-      publish ? '🏆 Results published!' : '💾 Draft saved.',
-      publish ? 'success' : 'info'
-    );
+    toast(publish ? 'Results published! 🏆' : '💾 Draft saved.', publish ? 'success' : 'info');
   } catch (e) {
     toast('Error saving results: ' + e.message, 'error');
   }
