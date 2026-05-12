@@ -1,19 +1,18 @@
 /**
  * agenda.js — Tab 2: Agenda
  *
- * Matches Figma UX exactly:
- *  - View mode : read-only table + "Edit Agenda" button (TC only)
- *  - Edit mode : inline input cells + "Add Row" / "Publish" / "Cancel" buttons
+ * View mode : read-only table  +  "Edit Agenda" button (TC only)
+ * Edit mode : inline inputs    +  "Add Row" / "Publish" / "Cancel"
+ *             + Import panel   →  Upload CSV  OR  Paste table
  */
 
 'use strict';
 
-let agHeaders    = [];
-let agRows       = [];
-let agPublished  = false;
-let agEditing    = false;
-// Deep-copy saved before editing (used for Cancel)
-let agSnapshot   = { headers: [], rows: [] };
+let agHeaders   = [];
+let agRows      = [];
+let agPublished = false;
+let agEditing   = false;
+let agSnapshot  = { headers: [], rows: [] };
 
 /* ── Entry point ────────────────────────────────────────────── */
 async function loadAgenda() {
@@ -33,33 +32,40 @@ async function loadAgenda() {
   _renderAgenda();
 }
 
-/* ── Render ─────────────────────────────────────────────────── */
+/* ── Main render ────────────────────────────────────────────── */
 function _renderAgenda() {
-  const con        = document.getElementById('agenda-container');
-  const viewBtns   = document.getElementById('agenda-view-actions');
-  const editBtns   = document.getElementById('agenda-edit-actions');
-  const hasData    = agHeaders.length > 0 && agRows.length > 0;
+  const con      = document.getElementById('agenda-container');
+  const viewBtns = document.getElementById('agenda-view-actions');
+  const editBtns = document.getElementById('agenda-edit-actions');
+  const hasData  = agHeaders.length > 0 && agRows.length > 0;
 
-  // Button bar visibility
+  // Toolbar visibility
   if (viewBtns) viewBtns.style.display = (!agEditing && App.isTC()) ? 'flex' : 'none';
-  if (editBtns) editBtns.style.display = (agEditing  && App.isTC()) ? 'flex' : 'none';
+  if (editBtns) editBtns.style.display = ( agEditing && App.isTC()) ? 'flex' : 'none';
 
-  // ── Empty / not published ──────────────────────────────────
+  // Nothing to show yet
   if (!hasData || (!agPublished && !App.isTC())) {
     con.innerHTML = '';
-    con.appendChild(_emptyAgendaEl());
+    con.appendChild(_emptyEl());
+    if (agEditing && App.isTC()) con.prepend(_importPanel('agenda'));
     return;
   }
 
-  // ── Build table ────────────────────────────────────────────
   con.innerHTML = '';
+
+  // Import panel shown above the table in edit mode
+  if (agEditing && App.isTC()) {
+    con.appendChild(_importPanel('agenda'));
+  }
+
+  // Table
   const tbl = DynamicTable.build({
     headers:     agHeaders,
     rows:        agRows,
     editable:    agEditing && App.isTC(),
     onAddRow:    agendaAddRow,
     onAddCol:    agendaAddCol,
-    onDeleteRow: (ri) => { agRows.splice(ri, 1);        _renderAgenda(); },
+    onDeleteRow: (ri) => { agRows.splice(ri, 1);       _renderAgenda(); },
     onDeleteCol: (ci) => {
       agHeaders.splice(ci, 1);
       agRows.forEach(r => r.splice(ci, 1));
@@ -68,7 +74,7 @@ function _renderAgenda() {
   });
   con.appendChild(tbl);
 
-  // Draft notice for TC in view mode
+  // Draft notice (TC view mode only)
   if (App.isTC() && !agPublished && !agEditing) {
     const strip = document.createElement('div');
     strip.className = 'status-strip';
@@ -77,26 +83,118 @@ function _renderAgenda() {
   }
 }
 
-function _emptyAgendaEl() {
+/* ── Empty state ────────────────────────────────────────────── */
+function _emptyEl() {
   const div = document.createElement('div');
-  if (App.isTC()) {
-    div.innerHTML = emptyState('📅', 'No agenda yet',
-      'Click "Edit Agenda" to start building the schedule.');
-  } else {
-    div.innerHTML = emptyState('⏳', 'Agenda will be out soon',
-      'Check back later for the full event schedule.');
-  }
+  div.innerHTML = App.isTC()
+    ? emptyState('📅', 'No agenda yet', 'Upload a CSV, paste a table, or add rows manually.')
+    : emptyState('⏳', 'Agenda will be out soon', 'Check back later for the full event schedule.');
   return div;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPORT PANEL
+   Shared UI rendered above the table in edit mode.
+   Accepts a `scope` string ('agenda' | 'results') so the
+   callback buttons can call the right apply function.
+══════════════════════════════════════════════════════════════ */
+function _importPanel(scope) {
+  const panel = document.createElement('div');
+  panel.className = 'import-panel';
+  panel.id = `${scope}-import-panel`;
+  panel.innerHTML = `
+    <div class="import-panel-inner">
+
+      <!-- ── Option 1: Upload CSV ── -->
+      <div class="import-option">
+        <div class="import-option-label">📂 Upload CSV</div>
+        <div class="import-option-desc">Select a <code>.csv</code> file — first row becomes the column headers.</div>
+        <label class="csv-upload-btn">
+          Choose CSV file
+          <input type="file" accept=".csv" onchange="_handleCSVUpload(event, '${scope}')">
+        </label>
+        <span class="csv-filename" id="${scope}-csv-filename"></span>
+      </div>
+
+      <div class="import-divider">or</div>
+
+      <!-- ── Option 2: Paste table ── -->
+      <div class="import-option">
+        <div class="import-option-label">📋 Paste Table</div>
+        <div class="import-option-desc">
+          Copy from <strong>Excel</strong> or <strong>Google Sheets</strong> and paste below.
+          First row becomes column headers.
+        </div>
+        <textarea
+          id="${scope}-paste-area"
+          class="paste-area"
+          placeholder="Paste your table here (Ctrl+V / Cmd+V)…"
+          rows="5"
+        ></textarea>
+        <button class="btn btn-primary btn-sm" onclick="_handlePaste('${scope}')">
+          Load Pasted Table
+        </button>
+      </div>
+
+    </div>`;
+  return panel;
+}
+
+/* ── CSV file upload handler ────────────────────────────────── */
+function _handleCSVUpload(event, scope) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  document.getElementById(`${scope}-csv-filename`).textContent = '📎 ' + file.name;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const result = parseCSVText(e.target.result);
+    if (!result || !result.headers.length) {
+      toast('Could not parse CSV — check the file format.', 'error');
+      return;
+    }
+    _applyImport(scope, result.headers, result.rows);
+    toast(`✅ CSV loaded — ${result.rows.length} rows, ${result.headers.length} columns.`, 'success');
+  };
+  reader.readAsText(file);
+}
+
+/* ── Paste handler ──────────────────────────────────────────── */
+function _handlePaste(scope) {
+  const text = document.getElementById(`${scope}-paste-area`).value;
+  if (!text.trim()) {
+    toast('Paste area is empty.', 'warning');
+    return;
+  }
+  const result = parsePastedTable(text);
+  if (!result || !result.headers.length) {
+    toast('Could not parse pasted content — copy directly from Excel or Sheets.', 'error');
+    return;
+  }
+  _applyImport(scope, result.headers, result.rows);
+  toast(`✅ Table loaded — ${result.rows.length} rows, ${result.headers.length} columns.`, 'success');
+}
+
+/* ── Apply parsed data to the right module ──────────────────── */
+function _applyImport(scope, headers, rows) {
+  if (scope === 'agenda') {
+    agHeaders = headers;
+    agRows    = rows;
+    _renderAgenda();
+  } else if (scope === 'results') {
+    resHeaders = headers;
+    resRows    = rows;
+    _renderResults();
+  }
 }
 
 /* ── Edit / Cancel ──────────────────────────────────────────── */
 function agendaStartEdit() {
-  // Save snapshot for cancel
   agSnapshot = {
     headers: JSON.parse(JSON.stringify(agHeaders)),
     rows:    JSON.parse(JSON.stringify(agRows)),
   };
-  // If no columns yet, seed with Figma defaults
   if (agHeaders.length === 0) {
     agHeaders = ['Time', 'Activity', 'Speaker', 'Location'];
     agRows    = [];
@@ -123,7 +221,7 @@ function agendaAddCol() {
   _renderAgenda();
 }
 
-/* ── Publish ────────────────────────────────────────────────── */
+/* ── Save / Publish ─────────────────────────────────────────── */
 async function saveAgenda(publish) {
   try {
     await Api.saveAgenda(agHeaders, agRows, publish);
