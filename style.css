@@ -566,3 +566,94 @@ blockquote.quote {
   .site-head-card { padding: 24px 18px; }
   .brand-title { font-size: 18px; }
 }
+
+/* Phase steps banner */
+.phase-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.phase-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.phase-num {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  font-size: 14px; font-weight: 700;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.phase-text {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.phase-text strong { font-size: 13.5px; color: var(--text); }
+.phase-text span   { font-size: 12px;   color: var(--text-3); }
+.phase-arrow {
+  font-size: 18px; color: var(--text-4);
+  padding: 0 12px; flex-shrink: 0;
+}
+
+/* My submission status card */
+.my-submission-card {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.my-sub-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 12px; flex-wrap: wrap;
+}
+.my-sub-title     { font-size: 16px; font-weight: 700; color: var(--text); }
+.my-sub-presenter { font-size: 13px; color: var(--text-3); margin-top: 3px; }
+.my-sub-abstract  {
+  font-size: 14px; color: var(--text-2); line-height: 1.7;
+  background: var(--bg-page); border-radius: var(--r-sm);
+  padding: 12px 14px; border-left: 3px solid var(--border-2);
+}
+.my-sub-msg {
+  font-size: 13.5px; color: var(--text-3); font-style: italic;
+}
+
+/* Uploaded file row under accepted status */
+.pres-file-uploaded {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  padding: 10px 14px;
+  background: var(--green-light); border-radius: var(--r-sm);
+  border: 1px solid rgba(22,163,74,.2);
+}
+
+/* TC review groups */
+.tc-group-heading {
+  font-size: 14px; font-weight: 700; color: var(--text-2);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tc-group-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--blue-light); color: var(--blue);
+  font-size: 12px; font-weight: 700;
+}
+
+/* Abstract preview cell — truncated with expand on hover */
+.abstract-preview {
+  font-size: 13px; color: var(--text-2);
+  max-width: 280px; max-height: 60px;
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-height: 1.5; cursor: default;
+}
+
+@media (max-width: 640px) {
+  .phase-steps  { flex-direction: column; align-items: flex-start; }
+  .phase-arrow  { display: none; }
+}
