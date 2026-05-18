@@ -79,4 +79,18 @@ const Api = {
   getConferences:    ()        => _get('/api/conferences'),
   addConference:     (body)    => _post('/api/conferences', body),
   deleteConference:  (id)      => _delete(`/api/conferences/${id}`),
+  /* ── Archive (Tech Day 2025) ────────────────────────────── */
+  getArchivePresentations: () => _get('/api/archive/2025/presentations'),
+  getArchiveResults:       () => _get('/api/archive/2025/results'),
+
+  /* ── Logo Competition ───────────────────────────────────── */
+  getMyLogo: () => _get('/api/logo/mine'),
+
+  submitLogo: (formData) =>
+    fetch(API_BASE + '/api/logo/submit', { method: 'POST', body: formData })
+      .then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.error); }); return r.json(); }),
+
+  getAllLogos: () => _get('/api/logo/all'),
+
+  logoUrl: (filePath) => `${API_BASE}/logo-uploads/${encodeURIComponent(filePath)}`,
 };

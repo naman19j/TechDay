@@ -52,6 +52,8 @@
   <button class="nav-tab"        data-tab="upcoming">    <span class="tab-icon">🔭</span> Upcoming Tech Events </button>
   <button class="nav-tab"        data-tab="conferences"> <span class="tab-icon">🌐</span> External Conferences </button>
   <button class="nav-tab"        data-tab="ask">         <span class="tab-icon">✉️</span> Ask a Question </button>
+  <button class="nav-tab"        data-tab="archive2025"> <span class="tab-icon">🗂️</span> Tech Day 2025 </button>
+  <button class="nav-tab"        data-tab="logo">        <span class="tab-icon">🎨</span> Logo Competition </button>
 </nav>
 
 <!-- ════════════════════════════════════════════════════════════
@@ -309,6 +311,89 @@
       <p class="ask-note">Clicking the button opens your default email client.</p>
     </div>
   </section>
+  <!-- ── LOGO COMPETITION ──────────────────────────────────── -->
+  <section id="content-logo" class="tab-content">
+
+    <div class="page-head">
+      <h1>Logo Competition — Tech Day 2026</h1>
+      <p>Design the official logo for Tech Day 2026 and submit it here. The best design wins!</p>
+    </div>
+
+    <!-- Rules card -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-label">📋 Guidelines</div>
+      <ul class="logo-rules">
+        <li>Submit your logo as a <strong>PNG, JPG, SVG, or WEBP</strong> file.</li>
+        <li>One submission per person — you can <strong>replace</strong> your logo at any time.</li>
+        <li>Your submission is <strong>only visible to you</strong> and the Tech Council.</li>
+        <li>The Tech Council will review all entries and announce the winner at Tech Day 2026.</li>
+      </ul>
+    </div>
+
+    <!-- Upload form -->
+    <div class="card" style="margin-bottom:28px">
+      <div class="section-label" id="logo-form-label">⬆️ Submit Your Logo</div>
+      <form id="logo-form" onsubmit="submitLogo(event)">
+        <div class="form-group">
+          <label class="form-label">Logo File (PNG, JPG, SVG, WEBP, GIF) *</label>
+          <div class="file-drop" id="logo-file-drop">
+            <input type="file" id="logo-file" accept=".png,.jpg,.jpeg,.svg,.gif,.webp" required onchange="onLogoFileChange(this)">
+            <div class="fd-icon">🎨</div>
+            <div class="fd-text">Drop your logo here or <strong>click to browse</strong></div>
+            <div class="fd-name" id="logo-fd-name"></div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="logo-submit-btn">Submit Logo</button>
+      </form>
+    </div>
+
+    <!-- Current submission preview (user's own) -->
+    <div id="logo-my-submission" style="display:none">
+      <div class="section-label">🖼️ Your Current Submission</div>
+      <div class="logo-preview-card" id="logo-preview-card"></div>
+    </div>
+
+    <!-- TC: all submissions -->
+    <div id="logo-all-section" style="display:none; margin-top:32px">
+      <div class="section-label" style="color:var(--blue)">
+        🎨 All Submissions <span class="badge badge-tc">Tech Council</span>
+      </div>
+      <div id="logo-all-container">
+        <div class="loading"><div class="spinner"></div> Loading…</div>
+      </div>
+    </div>
+
+  </section>
+  <section id="content-archive2025" class="tab-content">
+
+    <!-- Brief summary -->
+    <div class="page-head">
+      <h1>Tech Day 2025</h1>
+      <p>A look back at last year's event — presentations, posters, and results.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:28px">
+      <p class="overview-body">
+        Tech Day 2025 was a landmark event at our India site, bringing together over 150 employees
+        across engineering, product, and data teams. The event featured 8 technical presentations,
+        a poster session, panel discussions, and concluded with an awards ceremony recognising
+        outstanding contributions across five categories.
+      </p>
+    </div>
+
+    <!-- Presentations & Posters -->
+    <div class="section-label">📊 Presentations &amp; Posters</div>
+    <div id="archive-pres-container">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+
+    <!-- Results -->
+    <div class="section-label" style="margin-top:36px">🏆 Results</div>
+    <div id="archive-results-container">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+
+  </section>
 
 </main>
 
@@ -328,6 +413,8 @@
 <script src="static/js/results.js"></script>
 <script src="static/js/upcoming.js"></script>
 <script src="static/js/conferences.js"></script>
+<script src="static/js/archive.js"></script>
+<script src="static/js/logo.js"></script>
 <script src="static/js/app.js"></script>
 </body>
 </html>

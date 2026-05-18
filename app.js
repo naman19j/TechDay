@@ -139,7 +139,9 @@ function _loadTabData(tabId) {
     case 'results':       loadResults();                    break;
     case 'upcoming':      loadUpcoming();                   break;
     case 'conferences':   loadConferences();                break;
-    case 'ask':           /* static — nothing to load */    break;
+    case 'archive2025':   loadArchive2025();                break;
+    case 'logo':          loadLogoTab();                    break;
+    case 'ask':           /* static */                      break;
     default: break;
   }
 }
