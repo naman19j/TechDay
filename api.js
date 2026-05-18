@@ -50,15 +50,22 @@ const Api = {
     _post('/api/agenda', { headers, rows, published }),
 
   /* ── Presentations ──────────────────────────────────────── */
-  getPresentations: (role = 'user') =>
-    _get(`/api/presentations?role=${role}`),
+  // Phase 1 — submit abstract (JSON, no file)
+  submitAbstract: (body) => _post('/api/presentations/abstract', body),
 
-  submitPresentation: (formData) =>
-    fetch(API_BASE + '/api/presentations', { method: 'POST', body: formData })
+  // Phase 2 — TC accept / reject abstract
+  updateAbstractStatus: (id, status) =>
+    _patch(`/api/presentations/${id}/abstract-status`, { status }),
+
+  // Phase 3 — upload full file (accepted submitter only)
+  uploadPresentationFile: (id, formData) =>
+    fetch(API_BASE + `/api/presentations/${id}/file`, { method: 'POST', body: formData })
       .then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.error); }); return r.json(); }),
 
-  updatePresentationStatus: (id, status) =>
-    _patch(`/api/presentations/${id}/status`, { status }),
+  // Read endpoints
+  getMyPresentation:    ()  => _get('/api/presentations/mine'),
+  getAcceptedPresentations: () => _get('/api/presentations/accepted'),
+  getAllPresentations:   ()  => _get('/api/presentations/all'),
 
   fileUrl: (filePath) => `${API_BASE}/uploads/${encodeURIComponent(filePath)}`,
 

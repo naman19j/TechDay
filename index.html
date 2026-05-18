@@ -136,51 +136,57 @@
   <section id="content-presentations" class="tab-content">
     <div class="page-head">
       <h1>Presentations &amp; Posters</h1>
-      <p>Submit your work or browse accepted entries.</p>
+      <p>Submit an abstract to participate. Accepted entries can then upload their full presentation or poster.</p>
     </div>
 
-    <!-- Submission form (everyone) -->
-    <div class="card" style="margin-bottom:28px">
-      <div class="section-label">📤 Submit Your Work</div>
-      <form id="pres-form" onsubmit="submitPresentation(event)">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Title *</label>
-            <input type="text" id="pres-title" class="form-input" placeholder="e.g. ML at Scale: Our Journey" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Presenter Name *</label>
-            <input type="text" id="pres-presenter" class="form-input" placeholder="Full name" required>
-          </div>
+    <!-- Phase steps banner -->
+    <div class="phase-steps">
+      <div class="phase-step">
+        <div class="phase-num">1</div>
+        <div class="phase-text">
+          <strong>Submit Abstract</strong>
+          <span>Describe your presentation or poster</span>
         </div>
-        <div class="form-group">
-          <label class="form-label">File (PDF, PPT, PPTX, or Image) *</label>
-          <div class="file-drop" id="file-drop">
-            <input type="file" id="pres-file" accept=".pdf,.ppt,.pptx,.png,.jpg,.jpeg,.gif" required onchange="onFileChange(this)">
-            <div class="fd-icon">📁</div>
-            <div class="fd-text">Drop your file here or <strong>click to browse</strong></div>
-            <div class="fd-name" id="fd-name"></div>
-          </div>
+      </div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-step">
+        <div class="phase-num">2</div>
+        <div class="phase-text">
+          <strong>TC Review</strong>
+          <span>Tech Council accepts or rejects</span>
         </div>
-        <button type="submit" class="btn btn-primary" id="pres-submit-btn">Submit for Review</button>
-      </form>
+      </div>
+      <div class="phase-arrow">→</div>
+      <div class="phase-step">
+        <div class="phase-num">3</div>
+        <div class="phase-text">
+          <strong>Upload File</strong>
+          <span>Accepted entries upload their work</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Accepted entries -->
+    <!-- Section A: My submission (abstract form OR status card) -->
+    <div id="pres-my-wrap" style="margin-bottom:28px">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+
+    <!-- Section B: Accepted presentations (everyone) -->
     <div class="section-label">✅ Accepted Presentations &amp; Posters</div>
     <div id="pres-accepted-container">
       <div class="loading"><div class="spinner"></div> Loading…</div>
     </div>
 
-    <!-- TC approval panel -->
-    <div id="pres-approval-section" style="display:none; margin-top:32px">
-      <div class="section-label" style="color:var(--amber)">
-        ⚡ Pending Approval <span class="badge badge-tc">Tech Council</span>
+    <!-- Section C: TC review panel -->
+    <div id="pres-tc-panel" style="display:none; margin-top:36px">
+      <div class="section-label" style="color:var(--blue)">
+        ⚡ Abstract Review <span class="badge badge-tc">Tech Council</span>
       </div>
-      <div id="pres-pending-container">
+      <div id="pres-tc-container">
         <div class="loading"><div class="spinner"></div> Loading…</div>
       </div>
     </div>
+
   </section>
 
   <!-- ── TAB 4: ORGANIZING TEAM ─────────────────────────────── -->
