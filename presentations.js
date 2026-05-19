@@ -1,70 +1,63 @@
 /**
  * presentations.js — Tab 3: Presentations & Posters
  *
- * ┌─────────────────────────────────────────────────────────────┐
- * │  PHASE 1  Everyone submits an abstract (title + presenter   │
- * │           + abstract text). No file yet.                    │
- * ├─────────────────────────────────────────────────────────────┤
- * │  PHASE 2  Tech Council reviews abstracts → Accept / Reject  │
- * ├─────────────────────────────────────────────────────────────┤
- * │  PHASE 3  Accepted submitters upload their full file.       │
- * │           Rejected ones have no upload option.             │
- * └─────────────────────────────────────────────────────────────┘
+ * Phase 1 → Everyone submits an abstract (PDF or PPT/PPTX only)
+ * Phase 2 → Tech Council accepts or rejects the abstract
+ * Phase 3 → Accepted submitters upload their full file (PDF/PPT/PPTX)
  *
- * Visibility:
- *  - Everyone sees accepted + file-uploaded entries.
- *  - Each user sees their own submission status.
- *  - TC sees ALL abstracts for review.
+ * Each section loads independently — one failure never blocks another.
  */
 
 'use strict';
 
-/* ── Entry point ────────────────────────────────────────────── */
-async function loadPresentations() {
-  await Promise.all([
-    _loadMySubmission(),
-    _loadAccepted(),
-    App.isTC() ? _loadTCPanel() : Promise.resolve(),
-  ]);
+const ALLOWED_LABEL = 'PDF, PPT, PPTX';
+const ALLOWED_ACCEPT = '.pdf,.ppt,.pptx';
 
+/* ── Entry point ────────────────────────────────────────────── */
+function loadPresentations() {
+  // TC panel visibility set immediately — no waiting on API
   document.getElementById('pres-tc-panel').style.display =
     App.isTC() ? 'block' : 'none';
+
+  // Each section loads on its own — failures are isolated
+  _loadMySubmission();
+  _loadAccepted();
+  if (App.isTC()) _loadTCPanel();
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SECTION A — My Submission (status + file upload if accepted)
+   SECTION A — My Submission
 ══════════════════════════════════════════════════════════════ */
 async function _loadMySubmission() {
   const wrap = document.getElementById('pres-my-wrap');
+
+  // Show abstract form immediately as default — no spinner needed here
+  // We'll replace it only if the user already has a submission
+  wrap.innerHTML = _abstractFormHTML();
+
   try {
     const sub = await Api.getMyPresentation();
-
-    if (!sub) {
-      // No submission yet — show the abstract form
-      wrap.innerHTML = _abstractFormHTML();
-      return;
+    if (sub && sub.id) {
+      wrap.innerHTML = _myStatusCardHTML(sub);
+      if (sub.abstract_status === 'accepted' && !sub.file_path) {
+        _wireFileDrop('pres-file-drop');
+      }
     }
-
-    // Show status card + conditional upload section
-    wrap.innerHTML = _myStatusCardHTML(sub);
-
-    // Wire file upload form if abstract is accepted and no file yet
-    if (sub.abstract_status === 'accepted' && !sub.file_path) {
-      _wireFileUpload(sub.id);
-    }
+    // If null → abstract form already shown, nothing more to do
   } catch {
-    wrap.innerHTML = _abstractFormHTML();
+    // Backend error — abstract form already showing, that's fine
   }
 }
 
-/* ── Abstract submission form HTML ──────────────────────────── */
+/* ── Abstract submission form ───────────────────────────────── */
 function _abstractFormHTML() {
   return `
     <div class="card">
       <div class="section-label">📝 Submit Your Abstract</div>
       <p style="font-size:13.5px;color:var(--text-3);margin-bottom:18px">
-        Start by submitting your abstract. The Tech Council will review it —
-        if accepted, you'll be able to upload your full presentation or poster.
+        Start by submitting your abstract as a <strong>PDF or PPT/PPTX</strong> file.
+        The Tech Council will review it — if accepted, you can then upload your
+        full presentation or poster.
       </p>
       <form id="abstract-form" onsubmit="submitAbstract(event)">
         <div class="form-row">
@@ -80,10 +73,14 @@ function _abstractFormHTML() {
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Abstract *</label>
-          <textarea id="abs-abstract" class="form-input" rows="5"
-                    placeholder="Briefly describe your presentation or poster (100–300 words)…"
-                    required style="resize:vertical"></textarea>
+          <label class="form-label">Abstract File (${ALLOWED_LABEL}) *</label>
+          <div class="file-drop" id="abs-file-drop">
+            <input type="file" id="abs-file" accept="${ALLOWED_ACCEPT}" required
+                   onchange="_onFileChange('abs-file','abs-fd-name')">
+            <div class="fd-icon">📄</div>
+            <div class="fd-text">Drop your abstract here or <strong>click to browse</strong></div>
+            <div class="fd-name" id="abs-fd-name"></div>
+          </div>
         </div>
         <button type="submit" class="btn btn-primary" id="abs-submit-btn">
           Submit Abstract
@@ -92,54 +89,70 @@ function _abstractFormHTML() {
     </div>`;
 }
 
-/* ── My status card HTML ────────────────────────────────────── */
+/* ── My status card ─────────────────────────────────────────── */
 function _myStatusCardHTML(sub) {
-  const statusBadge = {
+  const badge = {
     pending:  '<span class="badge badge-pending">⏳ Pending Review</span>',
     accepted: '<span class="badge badge-accepted">✅ Abstract Accepted</span>',
     rejected: '<span class="badge badge-rejected">✗ Abstract Rejected</span>',
   }[sub.abstract_status] || '';
 
-  // Message under the status
-  const statusMsg = {
-    pending:  'Your abstract is under review by the Tech Council. You\'ll be able to upload your file once accepted.',
+  const msg = {
+    pending:  'Your abstract is under review by the Tech Council.',
     accepted: sub.file_path
-      ? 'Your file has been uploaded and your submission is complete!'
-      : 'Your abstract was accepted! You can now upload your full presentation or poster below.',
-    rejected: 'Unfortunately your abstract was not selected for this event. Thank you for participating!',
+      ? 'Your file has been uploaded. Your submission is complete!'
+      : 'Your abstract was accepted! Upload your full presentation or poster below.',
+    rejected: 'Your abstract was not selected for this event. Thank you for participating!',
   }[sub.abstract_status] || '';
 
-  let fileSection = '';
-  if (sub.abstract_status === 'accepted') {
-    if (sub.file_path) {
-      // File already uploaded
-      fileSection = `
-        <div class="pres-file-uploaded">
-          <span class="badge badge-accepted">📂 File Uploaded</span>
-          <span style="font-size:13px;color:var(--text-3);margin-left:8px">${esc(sub.file_name)}</span>
-          <a href="${Api.fileUrl(sub.file_path)}" target="_blank" rel="noopener"
-             class="btn btn-secondary btn-sm" style="margin-left:12px">View File ↗</a>
-        </div>`;
-    } else {
-      // Accepted but no file yet — upload form injected here
-      fileSection = `
-        <div id="pres-file-upload-section">
-          <div class="section-label" style="margin-top:20px;color:var(--green)">
-            📤 Upload Your Presentation / Poster
-          </div>
-          <div class="file-drop" id="pres-file-drop">
-            <input type="file" id="pres-file" accept=".pdf,.ppt,.pptx,.png,.jpg,.jpeg,.gif"
-                   onchange="onFileChange(this)">
-            <div class="fd-icon">📁</div>
-            <div class="fd-text">Drop your file here or <strong>click to browse</strong></div>
-            <div class="fd-name" id="fd-name"></div>
-          </div>
-          <button class="btn btn-success" style="margin-top:12px"
-                  id="pres-upload-btn" onclick="uploadPresentationFile(${sub.id})">
-            Upload File
-          </button>
-        </div>`;
-    }
+  // Abstract file link
+  const absFile = sub.file_path && sub.abstract_status === 'pending'
+    ? '' // file_path is only for the final upload; abstract file stored separately
+    : '';
+
+  // File upload section — only for accepted + no file yet
+  let uploadSection = '';
+  if (sub.abstract_status === 'accepted' && !sub.file_path) {
+    uploadSection = `
+      <div style="margin-top:16px">
+        <div class="section-label" style="color:var(--green)">📤 Upload Your Presentation / Poster</div>
+        <p style="font-size:13px;color:var(--text-3);margin-bottom:12px">
+          Accepted formats: <strong>${ALLOWED_LABEL}</strong>
+        </p>
+        <div class="file-drop" id="pres-file-drop">
+          <input type="file" id="pres-file" accept="${ALLOWED_ACCEPT}"
+                 onchange="_onFileChange('pres-file','pres-fd-name')">
+          <div class="fd-icon">📁</div>
+          <div class="fd-text">Drop your file here or <strong>click to browse</strong></div>
+          <div class="fd-name" id="pres-fd-name"></div>
+        </div>
+        <button class="btn btn-success" style="margin-top:12px"
+                id="pres-upload-btn" onclick="uploadPresentationFile(${sub.id})">
+          Upload File
+        </button>
+      </div>`;
+  }
+
+  // Uploaded file row
+  let fileRow = '';
+  if (sub.file_path) {
+    fileRow = `
+      <div class="pres-file-uploaded">
+        <span class="badge badge-accepted">📂 File Uploaded</span>
+        <span style="font-size:13px;color:var(--text-2);margin-left:8px">${esc(sub.file_name)}</span>
+        <a href="${Api.fileUrl(sub.file_path)}" target="_blank" rel="noopener"
+           class="btn btn-secondary btn-sm" style="margin-left:12px">View File ↗</a>
+      </div>`;
+  }
+
+  // Abstract file view (stored as abstract_file_path)
+  let absRow = '';
+  if (sub.abstract_file_path) {
+    absRow = `
+      <div style="margin-top:8px">
+        <a href="${Api.fileUrl(sub.abstract_file_path)}" target="_blank" rel="noopener"
+           class="btn btn-secondary btn-sm">📄 View Abstract File ↗</a>
+      </div>`;
   }
 
   return `
@@ -151,67 +164,82 @@ function _myStatusCardHTML(sub) {
             <div class="my-sub-title">${esc(sub.title)}</div>
             <div class="my-sub-presenter">👤 ${esc(sub.presenter)}</div>
           </div>
-          <div>${statusBadge}</div>
+          <div>${badge}</div>
         </div>
-        <div class="my-sub-abstract">${esc(sub.abstract)}</div>
-        <p class="my-sub-msg">${statusMsg}</p>
-        ${fileSection}
+        <p class="my-sub-msg">${msg}</p>
+        ${absRow}
+        ${fileRow}
+        ${uploadSection}
       </div>
     </div>`;
 }
 
-/* ── Wire drag-and-drop for the file upload section ─────────── */
-function _wireFileUpload(pid) {
-  // Drag events wired after DOM renders
+/* ── Drag-and-drop wiring ────────────────────────────────────── */
+function _wireFileDrop(dropId) {
   setTimeout(() => {
-    const drop = document.getElementById('pres-file-drop');
+    const drop = document.getElementById(dropId);
     if (!drop) return;
     drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('dragover'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('dragleave', ()  => drop.classList.remove('dragover'));
     drop.addEventListener('drop', e => {
       e.preventDefault(); drop.classList.remove('dragover');
-      const fi = document.getElementById('pres-file');
+      const inputId = drop.querySelector('input[type=file]').id;
+      const nameId  = drop.querySelector('.fd-name').id;
+      const fi = document.getElementById(inputId);
       if (e.dataTransfer.files.length) {
         const dt = new DataTransfer();
         dt.items.add(e.dataTransfer.files[0]);
         fi.files = dt.files;
-        onFileChange(fi);
+        _onFileChange(inputId, nameId);
       }
     });
-  }, 100);
+  }, 80);
 }
 
-/* ── File input helper ──────────────────────────────────────── */
+/* ── File input change helper ───────────────────────────────── */
+function _onFileChange(inputId, nameId) {
+  const fi = document.getElementById(inputId);
+  const nm = document.getElementById(nameId);
+  if (nm) nm.textContent = fi && fi.files[0] ? '📎 ' + fi.files[0].name : '';
+}
+
+// Legacy alias used by old onerror handlers
 function onFileChange(input) {
-  const el = document.getElementById('fd-name');
-  if (el) el.textContent = input.files[0] ? '📎 ' + input.files[0].name : '';
+  const nm = document.getElementById('fd-name') || document.getElementById('pres-fd-name');
+  if (nm) nm.textContent = input.files[0] ? '📎 ' + input.files[0].name : '';
 }
 
 /* ══════════════════════════════════════════════════════════════
-   FORM SUBMIT HANDLERS
+   FORM HANDLERS
 ══════════════════════════════════════════════════════════════ */
 
 /* Phase 1 — submit abstract ────────────────────────────────── */
 async function submitAbstract(e) {
   e.preventDefault();
-  const btn = document.getElementById('abs-submit-btn');
+  const btn  = document.getElementById('abs-submit-btn');
+  const file = document.getElementById('abs-file')?.files[0];
+
+  if (!file) { toast('Please attach your abstract file.', 'warning'); return; }
+
   btn.disabled = true; btn.textContent = 'Submitting…';
 
+  const fd = new FormData();
+  fd.append('title',     document.getElementById('abs-title').value.trim());
+  fd.append('presenter', document.getElementById('abs-presenter').value.trim());
+  fd.append('file',      file);
+
   try {
-    await Api.submitAbstract({
-      title:     document.getElementById('abs-title').value.trim(),
-      presenter: document.getElementById('abs-presenter').value.trim(),
-      abstract:  document.getElementById('abs-abstract').value.trim(),
-    });
+    await Api.submitAbstract(fd);
     toast('✅ Abstract submitted! The Tech Council will review it shortly.', 'success');
-    await _loadMySubmission();
+    _loadMySubmission();
+    if (App.isTC()) _loadTCPanel();
   } catch (err) {
     toast('Error: ' + err.message, 'error');
     btn.disabled = false; btn.textContent = 'Submit Abstract';
   }
 }
 
-/* Phase 3 — upload file ────────────────────────────────────── */
+/* Phase 3 — upload full file ───────────────────────────────── */
 async function uploadPresentationFile(pid) {
   const file = document.getElementById('pres-file')?.files[0];
   if (!file) { toast('Please select a file first.', 'warning'); return; }
@@ -225,8 +253,8 @@ async function uploadPresentationFile(pid) {
   try {
     await Api.uploadPresentationFile(pid, fd);
     toast('🎉 File uploaded successfully!', 'success');
-    await _loadMySubmission();
-    await _loadAccepted();
+    _loadMySubmission();
+    _loadAccepted();
   } catch (err) {
     toast('Error: ' + err.message, 'error');
     btn.disabled = false; btn.textContent = 'Upload File';
@@ -234,7 +262,7 @@ async function uploadPresentationFile(pid) {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SECTION B — Accepted presentations (visible to all)
+   SECTION B — Accepted presentations (everyone)
 ══════════════════════════════════════════════════════════════ */
 async function _loadAccepted() {
   const con = document.getElementById('pres-accepted-container');
@@ -251,7 +279,6 @@ async function _loadAccepted() {
 
     const grid = document.createElement('div');
     grid.className = 'pres-grid';
-
     items.forEach(p => {
       const card = document.createElement('div');
       card.className = 'pres-card';
@@ -274,7 +301,7 @@ async function _loadAccepted() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SECTION C — TC Review panel (all abstracts)
+   SECTION C — TC review panel (all abstracts)
 ══════════════════════════════════════════════════════════════ */
 async function _loadTCPanel() {
   const con = document.getElementById('pres-tc-container');
@@ -288,7 +315,6 @@ async function _loadTCPanel() {
       return;
     }
 
-    // Group by status for clarity
     const pending  = all.filter(p => p.abstract_status === 'pending');
     const accepted = all.filter(p => p.abstract_status === 'accepted');
     const rejected = all.filter(p => p.abstract_status === 'rejected');
@@ -297,42 +323,52 @@ async function _loadTCPanel() {
     if (pending.length)  con.appendChild(_tcGroup('⏳ Pending Review', pending,  true));
     if (accepted.length) con.appendChild(_tcGroup('✅ Accepted',       accepted, false));
     if (rejected.length) con.appendChild(_tcGroup('✗ Rejected',        rejected, false));
+
   } catch {
     con.innerHTML = emptyState('😕', 'Could not load submissions');
   }
 }
 
-/* ── Build a grouped table for TC ───────────────────────────── */
 function _tcGroup(heading, items, showActions) {
   const wrap = document.createElement('div');
   wrap.style.marginBottom = '24px';
 
   let html = `
-    <div class="tc-group-heading">${heading} <span class="tc-group-count">${items.length}</span></div>
+    <div class="tc-group-heading">
+      ${heading}
+      <span class="tc-group-count">${items.length}</span>
+    </div>
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr>
           <th>Title</th>
           <th>Presenter</th>
+          <th>Email</th>
           <th>Submitted</th>
           <th>Abstract</th>
-          <th>File</th>
+          <th>Final File</th>
           ${showActions ? '<th>Actions</th>' : ''}
         </tr></thead>
         <tbody>`;
 
   items.forEach(p => {
-    const fileCell = p.file_path
-      ? `<a href="${Api.fileUrl(p.file_path)}" target="_blank" class="btn btn-secondary btn-sm">📂 View</a>`
-      : `<span style="color:var(--text-4);font-size:12.5px">Not uploaded yet</span>`;
+    const absFile = p.abstract_file_path
+      ? `<a href="${Api.fileUrl(p.abstract_file_path)}" target="_blank"
+            class="btn btn-secondary btn-sm">📄 View</a>`
+      : '—';
+
+    const finalFile = p.file_path
+      ? `<a href="${Api.fileUrl(p.file_path)}" target="_blank"
+            class="btn btn-secondary btn-sm">📂 View</a>`
+      : `<span style="color:var(--text-4);font-size:12px">Not uploaded</span>`;
 
     const actions = showActions ? `
       <td>
         <div class="status-actions">
           <button class="btn btn-success btn-sm"
-            onclick="reviewAbstract(${p.id}, 'accepted')">✅ Accept</button>
-          <button class="btn btn-danger btn-sm"
-            onclick="reviewAbstract(${p.id}, 'rejected')">✗ Reject</button>
+            onclick="reviewAbstract(${p.id},'accepted')">✅ Accept</button>
+          <button class="btn btn-danger  btn-sm"
+            onclick="reviewAbstract(${p.id},'rejected')">✗ Reject</button>
         </div>
       </td>` : '';
 
@@ -340,11 +376,10 @@ function _tcGroup(heading, items, showActions) {
       <tr>
         <td><strong>${esc(p.title)}</strong></td>
         <td>${esc(p.presenter)}</td>
-        <td style="color:var(--text-3);font-size:12.5px">${fmtDate(p.submitted_at)}</td>
-        <td>
-          <div class="abstract-preview">${esc(p.abstract)}</div>
-        </td>
-        <td>${fileCell}</td>
+        <td style="font-size:12.5px;color:var(--text-3)">${esc(p.user_email)}</td>
+        <td style="font-size:12.5px;color:var(--text-3)">${fmtDate(p.submitted_at)}</td>
+        <td>${absFile}</td>
+        <td>${finalFile}</td>
         ${actions}
       </tr>`;
   });
@@ -354,7 +389,6 @@ function _tcGroup(heading, items, showActions) {
   return wrap;
 }
 
-/* ── TC: accept or reject abstract ─────────────────────────── */
 async function reviewAbstract(id, status) {
   try {
     await Api.updateAbstractStatus(id, status);
@@ -362,7 +396,7 @@ async function reviewAbstract(id, status) {
       status === 'accepted' ? '✅ Abstract accepted!' : 'Abstract rejected.',
       status === 'accepted' ? 'success' : 'info'
     );
-    await _loadTCPanel();
+    _loadTCPanel();
   } catch (err) {
     toast('Error: ' + err.message, 'error');
   }

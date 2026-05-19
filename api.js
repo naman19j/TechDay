@@ -50,8 +50,10 @@ const Api = {
     _post('/api/agenda', { headers, rows, published }),
 
   /* ── Presentations ──────────────────────────────────────── */
-  // Phase 1 — submit abstract (JSON, no file)
-  submitAbstract: (body) => _post('/api/presentations/abstract', body),
+  // Phase 1 — submit abstract (FormData with file)
+  submitAbstract: (formData) =>
+    fetch(API_BASE + '/api/presentations/abstract', { method: 'POST', body: formData })
+      .then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.error); }); return r.json(); }),
 
   // Phase 2 — TC accept / reject abstract
   updateAbstractStatus: (id, status) =>
