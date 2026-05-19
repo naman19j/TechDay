@@ -93,13 +93,11 @@ const Api = {
   getArchiveResults:       () => _get('/api/archive/2025/results'),
 
   /* ── Logo Competition ───────────────────────────────────── */
-  getMyLogo: () => _get('/api/logo/mine'),
-
-  submitLogo: (formData) =>
-    fetch(API_BASE + '/api/logo/submit', { method: 'POST', body: formData })
-      .then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.error); }); return r.json(); }),
-
-  getAllLogos: () => _get('/api/logo/all'),
-
+  getMyLogo:        ()             => _get('/api/logo/mine'),
+  getAllLogos:       ()             => _get('/api/logo/all'),
+  getLogoWinner:    ()             => _get('/api/logo/winner'),
+  submitLogo:       (formData)     => _postForm('/api/logo/submit', formData),
+  updateLogoStatus: (id, status)   => _patch(`/api/logo/${id}/status`, { status }),
+  logoUrl: (filePath) => `${API_BASE}/logo-uploads/${encodeURIComponent(filePath)}`,
   logoUrl: (filePath) => `${API_BASE}/logo-uploads/${encodeURIComponent(filePath)}`,
 };
